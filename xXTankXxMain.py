@@ -7,7 +7,7 @@ WIDTH, HEIGHT = 1000, 800
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("xXTankXx")
 
-BG = pygame.transform.scale(pygame.image.load("bg.jpeg"), (WIDTH, HEIGHT))
+BG = pygame.transform.scale(pygame.image.load("bg.jpg"), (WIDTH, HEIGHT))
 
 PLAYER_WIDTH = 60
 PLAYER_HEIGHT = 60
