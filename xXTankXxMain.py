@@ -17,8 +17,48 @@ STAR_WIDTH = 10
 STAR_HEIGHT = 20
 STAR_VEL = 3
 
+
+# Colors
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+GREEN = (0, 255, 0)
+
+
 FONT = pygame.font.SysFont("comicsans", 30)
 pygame.init()
+
+
+# Tank class
+class Tank:
+    posx:int
+    posy:int
+    posz:int
+    def __init__(self):
+        self.rect = pygame.Rect(WIDTH//2, HEIGHT-50, 50, 50)
+        self.speed = 5
+
+    def move(self, dx, dy):
+        self.rect.x += dx * self.speed
+        self.rect.y += dy * self.speed
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, GREEN, self.rect)
+
+# Bullet class
+class Bullet:
+    posx:int
+    posy:int
+    posz:int
+    def __init__(self, x, y):
+        self.rect = pygame.Rect(x, y, 5, 10)
+        self.speed = 7
+
+    def update(self):
+        self.rect.y -= self.speed
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, WHITE, self.rect)
+
 
 def draw(player, elapsed_time, stars):
     WIN.blit(BG, (0, 0))
@@ -48,7 +88,11 @@ def main():
 
     stars = []
     hit = False
+    
+    tank = Tank()
+    bullets = []
 
+#UPDATE AND ACTIVE FRAME SOUND
     while run:
         star_count += clock.tick(60)
         elapsed_time = time.time() - start_time
@@ -68,6 +112,20 @@ def main():
                 run = False
                 break
         
+        
+        # Update bullets
+        for bullet in bullets[:]:
+            bullet.update()
+            if bullet.rect.bottom < 0:
+                bullets.remove(bullet)
+
+        
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                # Shoot a bullet
+                bullet = Bullet(tank.rect.centerx, tank.rect.top)
+                bullets.append(bullet)
+
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT] and player.x - PLAYER_VEL >= 0:
             player.x -= PLAYER_VEL
@@ -86,16 +144,15 @@ def main():
                 stars.remove(star)
                 hit = True
                 break
-
+#GAME OVER CODE HERE
         if hit:
-            
             tankDeathSound = pygame.mixer.Sound('deathsfx.wav')
             tankDeathSound.play()
-            pygame.time.delay(4000)
+            
 
         draw(player, elapsed_time, stars)
 
-    pygame.quit()
+#    pygame.quit()
 
 
 if __name__ == "__main__":

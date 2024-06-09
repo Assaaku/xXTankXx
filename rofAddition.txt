@@ -1,0 +1,83 @@
+import pygame
+import sys
+
+# Initialize Pygame
+pygame.init()
+
+# Screen dimensions
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Tank Game")
+
+# Colors
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+GREEN = (0, 255, 0)
+
+# Tank class
+class Tank:
+    def __init__(self):
+        self.rect = pygame.Rect(WIDTH//2, HEIGHT-50, 50, 50)
+        self.speed = 5
+
+    def move(self, dx, dy):
+        self.rect.x += dx * self.speed
+        self.rect.y += dy * self.speed
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, GREEN, self.rect)
+
+# Bullet class
+class Bullet:
+    def __init__(self, x, y):
+        self.rect = pygame.Rect(x, y, 5, 10)
+        self.speed = 7
+
+    def update(self):
+        self.rect.y -= self.speed
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, WHITE, self.rect)
+
+# Initialize the tank
+tank = Tank()
+bullets = []
+
+# Main game loop
+running = True
+clock = pygame.time.Clock()
+
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                # Shoot a bullet
+                bullet = Bullet(tank.rect.centerx, tank.rect.top)
+                bullets.append(bullet)
+
+    # Handle tank movement
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]:
+        tank.move(-1, 0)
+    if keys[pygame.K_RIGHT]:
+        tank.move(1, 0)
+
+    # Update bullets
+    for bullet in bullets[:]:
+        bullet.update()
+        if bullet.rect.bottom < 0:
+            bullets.remove(bullet)
+
+    # Draw everything
+    screen.fill(BLACK)
+    tank.draw(screen)
+    for bullet in bullets:
+        bullet.draw(screen)
+    
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()
+sys.exit()
