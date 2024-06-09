@@ -30,11 +30,11 @@ class Tank:
     def move(self, keys):
         if keys[pygame.K_LEFT] and self.rect.x - self.speed >= 0:
             self.rect.x -= self.speed
-        if keys[pygame.K_RIGHT] and self.rect.x + self.speed + self.rect.width <= WIDTH:
+        elif keys[pygame.K_RIGHT] and self.rect.x + self.speed + self.rect.width <= WIDTH:
             self.rect.x += self.speed
-        if keys[pygame.K_UP] and self.rect.y - self.speed >= 0:
+        elif keys[pygame.K_UP] and self.rect.y - self.speed >= 0:
             self.rect.y -= self.speed
-        if keys[pygame.K_DOWN] and self.rect.y + self.speed + self.rect.height <= HEIGHT:
+        elif keys[pygame.K_DOWN] and self.rect.y + self.speed + self.rect.height <= HEIGHT:
             self.rect.y += self.speed
 
     def draw(self, screen):
