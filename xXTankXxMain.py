@@ -21,6 +21,7 @@ bullet_image = pygame.image.load("bullet.png")
 
 # Tank class
 class Tank:
+    facingDirection:int = 0
     def __init__(self):
         self.image = pygame.Surface((PLAYER_WIDTH, PLAYER_HEIGHT))
         self.image.fill("red")
@@ -42,13 +43,15 @@ class Tank:
 
 # Bullet class
 class Bullet:
+    # shootingDirection = 0
     def __init__(self, x, y):
         self.image = bullet_image
         self.rect = self.image.get_rect(center=(x, y))
         self.speed = 7
 
     def update(self):
-        self.rect.y -= self.speed
+        # if(shootingDirection)
+        self.rect -= self.speed
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
@@ -102,6 +105,7 @@ def main():
                 break
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
+                    
                     bullet = Bullet(tank.rect.centerx, tank.rect.top)
                     bullets.append(bullet)
 
