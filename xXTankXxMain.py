@@ -18,7 +18,7 @@ STAR_HEIGHT = 20
 STAR_VEL = 3
 
 FONT = pygame.font.SysFont("comicsans", 30)
-
+pygame.init()
 
 def draw(player, elapsed_time, stars):
     WIN.blit(BG, (0, 0))
@@ -89,11 +89,9 @@ def main():
 
         if hit:
             
-            lost_text = FONT.render("You Lost!", 1, "white")
-            WIN.blit(lost_text, (WIDTH/2 - lost_text.get_width()/2, HEIGHT/2 - lost_text.get_height()/2))
-            my_sound = pygame.mixer.Sound('deathvfx.wav')
+            tankDeathSound = pygame.mixer.Sound('deathsfx.wav')
+            tankDeathSound.play()
             pygame.time.delay(4000)
-            break
 
         draw(player, elapsed_time, stars)
 
