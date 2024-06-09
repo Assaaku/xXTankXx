@@ -1,6 +1,7 @@
 import pygame
 import time
 import random
+import moviepy.editor
 pygame.font.init()
 
 WIDTH, HEIGHT = 1000, 800
@@ -36,7 +37,7 @@ def draw(player, elapsed_time, stars):
 
 def main():
     run = True
-
+    
     player = pygame.Rect(200, HEIGHT - PLAYER_HEIGHT,
                          PLAYER_WIDTH, PLAYER_HEIGHT)
     clock = pygame.time.Clock()
@@ -78,21 +79,24 @@ def main():
         elif keys[pygame.K_DOWN] and player.x + PLAYER_VEL + player.width <= WIDTH:
             player.y += PLAYER_VEL
 
-        # for star in stars[:]:
-        #     star.y += STAR_VEL
-        #     if star.y > HEIGHT:
-        #         stars.remove(star)
-        #     elif star.y + star.height >= player.y and star.colliderect(player):
-        #         stars.remove(star)
-        #         hit = True
-        #         break
+        for star in stars[:]:
+            star.y += STAR_VEL
+            if star.y > HEIGHT:
+                stars.remove(star)
+            elif star.y + star.height >= player.y and star.colliderect(player):
+                stars.remove(star)
+                hit = True
+                break
 
-        # if hit:
-        #     lost_text = FONT.render("You Lost!", 1, "white")
-        #     WIN.blit(lost_text, (WIDTH/2 - lost_text.get_width()/2, HEIGHT/2 - lost_text.get_height()/2))
-        #     pygame.display.update()
-        #     pygame.time.delay(4000)
-        #     break
+        if hit:
+            
+            lost_text = FONT.render("You Lost!", 1, "white")
+            WIN.blit(lost_text, (WIDTH/2 - lost_text.get_width()/2, HEIGHT/2 - lost_text.get_height()/2))
+            pygame.display.update()
+            video = moviepy.editor.VideoFileClip("deathvfx.mp4")
+            video.preview()
+            pygame.time.delay(4000)
+            break
 
         draw(player, elapsed_time, stars)
 
@@ -101,3 +105,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
