@@ -1,7 +1,6 @@
 import pygame
 import time
 import random
-import moviepy.editor
 pygame.font.init()
 
 WIDTH, HEIGHT = 1000, 800
@@ -92,9 +91,7 @@ def main():
             
             lost_text = FONT.render("You Lost!", 1, "white")
             WIN.blit(lost_text, (WIDTH/2 - lost_text.get_width()/2, HEIGHT/2 - lost_text.get_height()/2))
-            pygame.display.update()
-            video = moviepy.editor.VideoFileClip("deathvfx.mp4")
-            video.preview()
+            my_sound = pygame.mixer.Sound('deathvfx.wav')
             pygame.time.delay(4000)
             break
 
