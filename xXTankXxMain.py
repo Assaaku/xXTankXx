@@ -1,6 +1,7 @@
 import pygame
 import time
 import random
+
 pygame.font.init()
 
 WIDTH, HEIGHT = 1000, 800
@@ -24,6 +25,22 @@ tank_image_up = pygame.image.load("tank_up.png")
 tank_image_down = pygame.image.load("tank_down.png")
 tank_image_left = pygame.image.load("tank_left.png")
 tank_image_right = pygame.image.load("tank_right.png")
+
+# Map layout 0 = empty space, 1 = wall
+MAP = [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+]
+
+TILE_SIZE = WIDTH // len(MAP[0])
 
 # Tank class
 class Tank:
@@ -54,6 +71,21 @@ class Tank:
                 self.rect.y += self.speed
                 self.image = pygame.transform.scale(tank_image_down, (PLAYER_WIDTH, PLAYER_HEIGHT))
                 self.direction = 'down'
+
+        # Collision detection with walls
+        for row in range(len(MAP)):
+            for col in range(len(MAP[0])):
+                if MAP[row][col] == 1:
+                    wall_rect = pygame.Rect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                    if self.rect.colliderect(wall_rect):
+                        if self.direction == 'left':
+                            self.rect.left = wall_rect.right
+                        elif self.direction == 'right':
+                            self.rect.right = wall_rect.left
+                        elif self.direction == 'up':
+                            self.rect.top = wall_rect.bottom
+                        elif self.direction == 'down':
+                            self.rect.bottom = wall_rect.top
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
@@ -86,6 +118,16 @@ class Bullet:
     def draw(self, screen):
         screen.blit(self.image, self.rect)
 
+    def check_collision(self):
+        # Collision detection with walls
+        for row in range(len(MAP)):
+            for col in range(len(MAP[0])):
+                if MAP[row][col] == 1:
+                    wall_rect = pygame.Rect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                    if self.rect.colliderect(wall_rect):
+                        return True
+        return False
+
 # Draw function
 def draw(tank, bullets, elapsed_time, stars):
     WIN.blit(BG, (0, 0))
@@ -100,6 +142,13 @@ def draw(tank, bullets, elapsed_time, stars):
 
     for star in stars:
         pygame.draw.rect(WIN, "white", star)
+
+    # Draw walls
+    for row in range(len(MAP)):
+        for col in range(len(MAP[0])):
+            if MAP[row][col] == 1:
+                wall_rect = pygame.Rect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                pygame.draw.rect(WIN, "gray", wall_rect)
 
     pygame.display.update()
 
@@ -143,8 +192,7 @@ def main():
 
         for bullet in bullets[:]:
             bullet.update()
-            if (bullet.rect.bottom < 0 or bullet.rect.top > HEIGHT or 
-                bullet.rect.right < 0 or bullet.rect.left > WIDTH):
+            if bullet.rect.bottom < 0 or bullet.rect.top > HEIGHT or bullet.rect.right < 0 or bullet.rect.left > WIDTH or bullet.check_collision():
                 bullets.remove(bullet)
 
         draw(tank, bullets, elapsed_time, stars)
