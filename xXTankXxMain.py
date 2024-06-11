@@ -7,7 +7,7 @@ pygame.font.init()
 WIDTH, HEIGHT = 1000, 800
 PLAYER_WIDTH = 60
 PLAYER_HEIGHT = 60
-PLAYER_VEL = 5
+PLAYER_VEL = 3.2
 STAR_WIDTH = 10
 STAR_HEIGHT = 20
 STAR_VEL = 3
@@ -56,6 +56,9 @@ class Tank:
         self.rect = self.image.get_rect(center=(WIDTH // 2, HEIGHT - 50))
         self.speed = PLAYER_VEL
         self.direction = 'up'  # Default direction
+        startSound= pygame.mixer.Sound('gamestart.wav')
+        startSound.set_volume(0.15)
+        pygame.mixer.Sound.play(startSound)
 
     def move(self, keys):
         if keys[pygame.K_LEFT] and not (keys[pygame.K_UP] or keys[pygame.K_DOWN]):
