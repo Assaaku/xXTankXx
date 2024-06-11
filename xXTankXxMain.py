@@ -7,7 +7,7 @@ pygame.font.init()
 WIDTH, HEIGHT = 1000, 800
 PLAYER_WIDTH = 60
 PLAYER_HEIGHT = 60
-PLAYER_VEL = 5
+PLAYER_VEL = 3.2
 STAR_WIDTH = 10
 STAR_HEIGHT = 20
 STAR_VEL = 3
@@ -26,7 +26,11 @@ tank_image_down = pygame.image.load("tank_down.png")
 tank_image_left = pygame.image.load("tank_left.png")
 tank_image_right = pygame.image.load("tank_right.png")
 
-# Map layout 0 = empty space, 1 = wall
+# Load wall images
+brick_image = pygame.image.load("brick.png")
+breaking_images = [pygame.image.load(f"break_{i}.png") for i in range(3)]
+
+# Map layout (0 = empty space, 1 = wall)
 MAP = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -44,10 +48,28 @@ MAP = [
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-    
 ]
 
 TILE_SIZE = WIDTH // len(MAP[0])
+
+# Wall class
+class Wall:
+    def __init__(self, x, y):
+        self.image = brick_image
+        self.rect = self.image.get_rect(topleft=(x, y))
+        self.health = len(breaking_images)  # Number of breaking stages
+
+    def hit(self):
+        self.health -= 1
+        if self.health > 0:
+            self.image = breaking_images[len(breaking_images) - self.health - 1]
+
+    def is_broken(self):
+        return self.health <= 0
+
+    def draw(self, screen):
+        if self.health > 0:
+            screen.blit(self.image, self.rect)
 
 # Tank class
 class Tank:
@@ -58,6 +80,8 @@ class Tank:
         self.direction = 'up'  # Default direction
 
     def move(self, keys):
+        initial_position = self.rect.topleft
+
         if keys[pygame.K_LEFT] and not (keys[pygame.K_UP] or keys[pygame.K_DOWN]):
             if self.rect.x - self.speed >= 0:
                 self.rect.x -= self.speed
@@ -80,19 +104,9 @@ class Tank:
                 self.direction = 'down'
 
         # Collision detection with walls
-        for row in range(len(MAP)):
-            for col in range(len(MAP[0])):
-                if MAP[row][col] == 1:
-                    wall_rect = pygame.Rect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                    if self.rect.colliderect(wall_rect):
-                        if self.direction == 'left':
-                            self.rect.left = wall_rect.right
-                        elif self.direction == 'right':
-                            self.rect.right = wall_rect.left
-                        elif self.direction == 'up':
-                            self.rect.top = wall_rect.bottom
-                        elif self.direction == 'down':
-                            self.rect.bottom = wall_rect.top
+        for wall in walls:
+            if self.rect.colliderect(wall.rect) and not wall.is_broken():
+                self.rect.topleft = initial_position
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
@@ -126,13 +140,12 @@ class Bullet:
         screen.blit(self.image, self.rect)
 
     def check_collision(self):
-        # Collision detection with walls
-        for row in range(len(MAP)):
-            for col in range(len(MAP[0])):
-                if MAP[row][col] == 1:
-                    wall_rect = pygame.Rect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                    if self.rect.colliderect(wall_rect):
-                        return True
+        for wall in walls:
+            if self.rect.colliderect(wall.rect):
+                wall.hit()
+                if wall.is_broken():
+                    walls.remove(wall)
+                return True
         return False
 
 # Draw function
@@ -150,17 +163,14 @@ def draw(tank, bullets, elapsed_time, stars):
     for star in stars:
         pygame.draw.rect(WIN, "white", star)
 
-    # Draw walls
-    for row in range(len(MAP)):
-        for col in range(len(MAP[0])):
-            if MAP[row][col] == 1:
-                wall_rect = pygame.Rect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                pygame.draw.rect(WIN, "gray", wall_rect)
+    for wall in walls:
+        wall.draw(WIN)
 
     pygame.display.update()
 
 # Main 
 def main():
+    global walls  # Define the walls list
     run = True
     clock = pygame.time.Clock()
     start_time = time.time()
@@ -172,6 +182,14 @@ def main():
     stars = []
     bullets = []
     tank = Tank()
+
+    # Initialize walls
+    walls = []
+    for row in range(len(MAP)):
+        for col in range(len(MAP[0])):
+            if MAP[row][col] == 1:
+                wall = Wall(col * TILE_SIZE, row * TILE_SIZE)
+                walls.append(wall)
 
     while run:
         star_count += clock.tick(60)
