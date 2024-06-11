@@ -19,44 +19,74 @@ pygame.display.set_caption("xXTankXx")
 BG = pygame.transform.scale(pygame.image.load("bg.jpg"), (WIDTH, HEIGHT))
 bullet_image = pygame.image.load("bullet.png")
 
+# Load tank images for different directions
+tank_image_up = pygame.image.load("tank_up.png")
+tank_image_down = pygame.image.load("tank_down.png")
+tank_image_left = pygame.image.load("tank_left.png")
+tank_image_right = pygame.image.load("tank_right.png")
+
 # Tank class
 class Tank:
-    facingDirection:int = 0
     def __init__(self):
-        self.image = pygame.Surface((PLAYER_WIDTH, PLAYER_HEIGHT))
-        self.image.fill("red")
+        self.image = pygame.transform.scale(tank_image_up, (PLAYER_WIDTH, PLAYER_HEIGHT))  # Default image
         self.rect = self.image.get_rect(center=(WIDTH // 2, HEIGHT - 50))
         self.speed = PLAYER_VEL
+        self.direction = 'up'  # Default direction
 
     def move(self, keys):
-        if keys[pygame.K_LEFT] and self.rect.x - self.speed >= 0:
-            self.rect.x -= self.speed
-        elif keys[pygame.K_RIGHT] and self.rect.x + self.speed + self.rect.width <= WIDTH:
-            self.rect.x += self.speed
-        elif keys[pygame.K_UP] and self.rect.y - self.speed >= 0:
-            self.rect.y -= self.speed
-        elif keys[pygame.K_DOWN] and self.rect.y + self.speed + self.rect.height <= HEIGHT:
-            self.rect.y += self.speed
+        if keys[pygame.K_LEFT] and not (keys[pygame.K_UP] or keys[pygame.K_DOWN]):
+            if self.rect.x - self.speed >= 0:
+                self.rect.x -= self.speed
+                self.image = pygame.transform.scale(tank_image_left, (PLAYER_WIDTH, PLAYER_HEIGHT))
+                self.direction = 'left'
+        elif keys[pygame.K_RIGHT] and not (keys[pygame.K_UP] or keys[pygame.K_DOWN]):
+            if self.rect.x + self.speed + self.rect.width <= WIDTH:
+                self.rect.x += self.speed
+                self.image = pygame.transform.scale(tank_image_right, (PLAYER_WIDTH, PLAYER_HEIGHT))
+                self.direction = 'right'
+        elif keys[pygame.K_UP] and not (keys[pygame.K_LEFT] or keys[pygame.K_RIGHT]):
+            if self.rect.y - self.speed >= 0:
+                self.rect.y -= self.speed
+                self.image = pygame.transform.scale(tank_image_up, (PLAYER_WIDTH, PLAYER_HEIGHT))
+                self.direction = 'up'
+        elif keys[pygame.K_DOWN] and not (keys[pygame.K_LEFT] or keys[pygame.K_RIGHT]):
+            if self.rect.y + self.speed + self.rect.height <= HEIGHT:
+                self.rect.y += self.speed
+                self.image = pygame.transform.scale(tank_image_down, (PLAYER_WIDTH, PLAYER_HEIGHT))
+                self.direction = 'down'
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
 
 # Bullet class
 class Bullet:
-    # shootingDirection = 0
-    def __init__(self, x, y):
-        self.image = bullet_image
-        self.rect = self.image.get_rect(center=(x, y))
+    def __init__(self, x, y, direction):
         self.speed = 7
+        self.direction = direction
+        if self.direction == 'up':
+            self.image = bullet_image
+        elif self.direction == 'down':
+            self.image = pygame.transform.rotate(bullet_image, 180)
+        elif self.direction == 'left':
+            self.image = pygame.transform.rotate(bullet_image, 90)
+        elif self.direction == 'right':
+            self.image = pygame.transform.rotate(bullet_image, -90)
+        self.rect = self.image.get_rect(center=(x, y))
 
     def update(self):
-        # if(shootingDirection)
-        self.rect -= self.speed
+        if self.direction == 'up':
+            self.rect.y -= self.speed
+        elif self.direction == 'down':
+            self.rect.y += self.speed
+        elif self.direction == 'left':
+            self.rect.x -= self.speed
+        elif self.direction == 'right':
+            self.rect.x += self.speed
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
 
-#draw function
+# Draw function
 def draw(tank, bullets, elapsed_time, stars):
     WIN.blit(BG, (0, 0))
 
@@ -105,8 +135,7 @@ def main():
                 break
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    
-                    bullet = Bullet(tank.rect.centerx, tank.rect.top)
+                    bullet = Bullet(tank.rect.centerx, tank.rect.centery, tank.direction)
                     bullets.append(bullet)
 
         keys = pygame.key.get_pressed()
@@ -114,7 +143,8 @@ def main():
 
         for bullet in bullets[:]:
             bullet.update()
-            if bullet.rect.bottom < 0:
+            if (bullet.rect.bottom < 0 or bullet.rect.top > HEIGHT or 
+                bullet.rect.right < 0 or bullet.rect.left > WIDTH):
                 bullets.remove(bullet)
 
         draw(tank, bullets, elapsed_time, stars)
