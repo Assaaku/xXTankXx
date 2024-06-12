@@ -5,13 +5,15 @@ import random
 pygame.font.init()
 
 WIDTH, HEIGHT = 1000, 800
-PLAYER_WIDTH = 60
-PLAYER_HEIGHT = 60
+PLAYER_WIDTH = 45
+PLAYER_HEIGHT = 45
 PLAYER_VEL = 3.2
 STAR_WIDTH = 10
 STAR_HEIGHT = 20
 STAR_VEL = 3
 FONT = pygame.font.SysFont("comicsans", 30)
+FIRING_COOLDOWN = 0.25
+
 
 pygame.init()
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -78,7 +80,16 @@ class Tank:
         self.rect = self.image.get_rect(center=(WIDTH // 2, HEIGHT - 50))
         self.speed = PLAYER_VEL
         self.direction = 'up'  # Default direction
+        self.startSound= pygame.mixer.Sound('gamestart.wav')
+        self.startSound.set_volume(0.15)
+        pygame.mixer.Sound.play(self.startSound)
 
+        self.moveSound= pygame.mixer.Sound('move.ogg')
+        self.moveSound.set_volume(0.3)
+        self.moveSoundCooldown = 0.5  # Default cooldown duration
+        self.timeDeltaCapture = time.time() 
+        self.tankFireLastTime = time.time()
+        
     def move(self, keys):
         initial_position = self.rect.topleft
 
@@ -87,21 +98,37 @@ class Tank:
                 self.rect.x -= self.speed
                 self.image = pygame.transform.scale(tank_image_left, (PLAYER_WIDTH, PLAYER_HEIGHT))
                 self.direction = 'left'
+                if time.time() > self.timeDeltaCapture:
+                    pygame.mixer.Sound.play(self.moveSound)
+                    self.timeDeltaCapture = time.time() + self.moveSound.get_length()  # Reset the cooldown based on sound length
+
         elif keys[pygame.K_RIGHT] and not (keys[pygame.K_UP] or keys[pygame.K_DOWN]):
             if self.rect.x + self.speed + self.rect.width <= WIDTH:
                 self.rect.x += self.speed
                 self.image = pygame.transform.scale(tank_image_right, (PLAYER_WIDTH, PLAYER_HEIGHT))
                 self.direction = 'right'
+                if time.time() > self.timeDeltaCapture:
+                    pygame.mixer.Sound.play(self.moveSound)
+                    self.timeDeltaCapture = time.time() + self.moveSound.get_length()  # Reset the cooldown based on sound length
+
         elif keys[pygame.K_UP] and not (keys[pygame.K_LEFT] or keys[pygame.K_RIGHT]):
             if self.rect.y - self.speed >= 0:
                 self.rect.y -= self.speed
                 self.image = pygame.transform.scale(tank_image_up, (PLAYER_WIDTH, PLAYER_HEIGHT))
                 self.direction = 'up'
+                if time.time() > self.timeDeltaCapture:
+                    pygame.mixer.Sound.play(self.moveSound)
+                    self.timeDeltaCapture = time.time() + self.moveSound.get_length()  # Reset the cooldown based on sound length
+
         elif keys[pygame.K_DOWN] and not (keys[pygame.K_LEFT] or keys[pygame.K_RIGHT]):
             if self.rect.y + self.speed + self.rect.height <= HEIGHT:
                 self.rect.y += self.speed
                 self.image = pygame.transform.scale(tank_image_down, (PLAYER_WIDTH, PLAYER_HEIGHT))
                 self.direction = 'down'
+                if time.time() > self.timeDeltaCapture:
+                    pygame.mixer.Sound.play(self.moveSound)
+                    self.timeDeltaCapture = time.time() + self.moveSound.get_length()  # Reset the cooldown based on sound length
+
 
         # Collision detection with walls
         for wall in walls:
@@ -125,6 +152,7 @@ class Bullet:
         elif self.direction == 'right':
             self.image = pygame.transform.rotate(bullet_image, -90)
         self.rect = self.image.get_rect(center=(x, y))
+        self.shootSound = pygame.mixer.Sound('fire.ogg')
 
     def update(self):
         if self.direction == 'up':
@@ -208,9 +236,13 @@ def main():
                 run = False
                 break
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    bullet = Bullet(tank.rect.centerx, tank.rect.centery, tank.direction)
-                    bullets.append(bullet)
+                if(time.time() > tank.tankFireLastTime):
+                    if event.key == pygame.K_SPACE:
+                        bullet = Bullet(tank.rect.centerx, tank.rect.centery, tank.direction)
+                        bullets.append(bullet)
+                        pygame.mixer.Sound.play(bullet.shootSound)
+                        tank.tankFireLastTime = time.time() + FIRING_COOLDOWN
+
 
         keys = pygame.key.get_pressed()
         tank.move(keys)
