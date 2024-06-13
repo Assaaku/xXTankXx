@@ -105,9 +105,6 @@ class Tank:
         self.down_key = down_key
         self.left_key = left_key
         self.right_key = right_key
-        self.startSound = pygame.mixer.Sound('gamestart.wav')
-        self.startSound.set_volume(0.15)
-        pygame.mixer.Sound.play(self.startSound)
 
         self.moveSound = pygame.mixer.Sound('move.ogg')
         self.moveSound.set_volume(0.3)
@@ -232,7 +229,10 @@ def main():
 
     star_add_increment = 2000
     star_count = 0
-
+    
+    startSound= pygame.mixer.Sound('gamestart.wav')
+    startSound.set_volume(0.15)
+    pygame.mixer.Sound.play(startSound)
     stars = []
     bullets = []
 
