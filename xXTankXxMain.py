@@ -14,7 +14,6 @@ STAR_VEL = 3
 FONT = pygame.font.SysFont("comicsans", 30)
 FIRING_COOLDOWN = 0.25
 
-
 pygame.init()
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("xXTankXx")
@@ -22,11 +21,32 @@ pygame.display.set_caption("xXTankXx")
 BG = pygame.transform.scale(pygame.image.load("bg.jpg"), (WIDTH, HEIGHT))
 bullet_image = pygame.image.load("bullet.png")
 
-# Load tank images for different directions
-tank_image_up = pygame.image.load("tank_up.png")
-tank_image_down = pygame.image.load("tank_down.png")
-tank_image_left = pygame.image.load("tank_left.png")
-tank_image_right = pygame.image.load("tank_right.png")
+tank_images = {
+    'tank1': {
+        'up': pygame.image.load("tank_up.png"),
+        'down': pygame.image.load("tank_down.png"),
+        'left': pygame.image.load("tank_left.png"),
+        'right': pygame.image.load("tank_right.png")
+    },
+    'tank2': {
+        'up': pygame.image.load("tank2_up.png"),
+        'down': pygame.image.load("tank2_down.png"),
+        'left': pygame.image.load("tank2_left.png"),
+        'right': pygame.image.load("tank2_right.png")
+    },
+    'tank3': {
+        'up': pygame.image.load("tank3_up.png"),
+        'down': pygame.image.load("tank3_down.png"),
+        'left': pygame.image.load("tank3_left.png"),
+        'right': pygame.image.load("tank3_right.png")
+    },
+    'tank4': {
+        'up': pygame.image.load("tank4_up.png"),
+        'down': pygame.image.load("tank4_down.png"),
+        'left': pygame.image.load("tank4_left.png"),
+        'right': pygame.image.load("tank4_right.png")
+    }
+}
 
 # Load wall images
 brick_image = pygame.image.load("brick.png")
@@ -75,8 +95,9 @@ class Wall:
 
 # Tank class
 class Tank:
-    def __init__(self, up_key, down_key, left_key, right_key):
-        self.image = pygame.transform.scale(tank_image_up, (PLAYER_WIDTH, PLAYER_HEIGHT))  # Default image
+    def __init__(self, up_key, down_key, left_key, right_key, images):
+        self.images = images  # Dictionary of images for this tank
+        self.image = pygame.transform.scale(self.images['up'], (PLAYER_WIDTH, PLAYER_HEIGHT))  # Default image
         self.rect = self.image.get_rect(center=(WIDTH // 2, HEIGHT - 50))
         self.speed = PLAYER_VEL
         self.direction = 'up'  # Default direction
@@ -84,11 +105,11 @@ class Tank:
         self.down_key = down_key
         self.left_key = left_key
         self.right_key = right_key
-        self.startSound= pygame.mixer.Sound('gamestart.wav')
+        self.startSound = pygame.mixer.Sound('gamestart.wav')
         self.startSound.set_volume(0.15)
         pygame.mixer.Sound.play(self.startSound)
 
-        self.moveSound= pygame.mixer.Sound('move.ogg')
+        self.moveSound = pygame.mixer.Sound('move.ogg')
         self.moveSound.set_volume(0.3)
         self.moveSoundCooldown = 0.5  # Default cooldown duration
         self.timeDeltaCapture = time.time() 
@@ -97,37 +118,37 @@ class Tank:
     def move(self, keys):
         initial_position = self.rect.topleft
 
-        if keys[self.left_key] :
+        if keys[self.left_key]:
             if self.rect.x - self.speed >= 0:
                 self.rect.x -= self.speed
-                self.image = pygame.transform.scale(tank_image_left, (PLAYER_WIDTH, PLAYER_HEIGHT))
+                self.image = pygame.transform.scale(self.images['left'], (PLAYER_WIDTH, PLAYER_HEIGHT))
                 self.direction = 'left'
                 if time.time() > self.timeDeltaCapture:
                     pygame.mixer.Sound.play(self.moveSound)
                     self.timeDeltaCapture = time.time() + self.moveSound.get_length()  # Reset the cooldown based on sound length
 
-        elif keys[self.right_key] :
+        elif keys[self.right_key]:
             if self.rect.x - self.speed >= 0:
                 self.rect.x += self.speed
-                self.image = pygame.transform.scale(tank_image_right, (PLAYER_WIDTH, PLAYER_HEIGHT))
+                self.image = pygame.transform.scale(self.images['right'], (PLAYER_WIDTH, PLAYER_HEIGHT))
                 self.direction = 'right'
                 if time.time() > self.timeDeltaCapture:
                     pygame.mixer.Sound.play(self.moveSound)
                     self.timeDeltaCapture = time.time() + self.moveSound.get_length()  # Reset the cooldown based on sound length
 
-        elif keys[self.up_key] :
+        elif keys[self.up_key]:
             if self.rect.y - self.speed >= 0:
                 self.rect.y -= self.speed
-                self.image = pygame.transform.scale(tank_image_up, (PLAYER_WIDTH, PLAYER_HEIGHT))
+                self.image = pygame.transform.scale(self.images['up'], (PLAYER_WIDTH, PLAYER_HEIGHT))
                 self.direction = 'up'
                 if time.time() > self.timeDeltaCapture:
                     pygame.mixer.Sound.play(self.moveSound)
                     self.timeDeltaCapture = time.time() + self.moveSound.get_length()  # Reset the cooldown based on sound length
 
-        elif keys[self.down_key] :
+        elif keys[self.down_key]:
             if self.rect.y + self.speed + self.rect.height <= HEIGHT:
                 self.rect.y += self.speed
-                self.image = pygame.transform.scale(tank_image_down, (PLAYER_WIDTH, PLAYER_HEIGHT))
+                self.image = pygame.transform.scale(self.images['down'], (PLAYER_WIDTH, PLAYER_HEIGHT))
                 self.direction = 'down'
                 if time.time() > self.timeDeltaCapture:
                     pygame.mixer.Sound.play(self.moveSound)
@@ -201,7 +222,6 @@ def draw(tanks, bullets, elapsed_time, stars):
 
     pygame.display.update()
 
-
 # Main 
 def main():
     global walls  # Define the walls list
@@ -215,13 +235,16 @@ def main():
 
     stars = []
     bullets = []
+
     tank_controls = [
-        (pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT),  # Arrow keys for tank 1
-        (pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d),             # WASD for tank 2
-        (pygame.K_i, pygame.K_k, pygame.K_j, pygame.K_l),             # IJKL for tank 3
-        (pygame.K_t, pygame.K_g, pygame.K_f, pygame.K_h)              # TFGH for tank 4
+        (pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, tank_images['tank1']),  # Arrow keys for tank 1
+        (pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d, tank_images['tank2']),             # WASD for tank 2
+        (pygame.K_i, pygame.K_k, pygame.K_j, pygame.K_l, tank_images['tank3']),             # IJKL for tank 3
+        (pygame.K_t, pygame.K_g, pygame.K_f, pygame.K_h, tank_images['tank4'])              # TFGH for tank 4
     ]
+
     tanks = [Tank(*controls) for controls in tank_controls]
+
     # Initialize walls
     walls = []
     for row in range(len(MAP)):
@@ -234,38 +257,29 @@ def main():
         star_count += clock.tick(60)
         elapsed_time = time.time() - start_time
 
-        # if star_count > star_add_increment:
-        #     for _ in range(3):
-        #         star_x = random.randint(0, WIDTH - STAR_WIDTH)
-        #         star = pygame.Rect(star_x, -STAR_HEIGHT, STAR_WIDTH, STAR_HEIGHT)
-        #         stars.append(star)
-        #     star_add_increment = max(200, star_add_increment - 50)
-        #     star_count = 0
-        for currentTank in range(len(tanks)):
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    run = False
-                    break
-                elif event.type == pygame.KEYDOWN:
-                    if(time.time() > tanks[currentTank].tankFireLastTime):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                break
+            elif event.type == pygame.KEYDOWN:
+                for tank in tanks:
+                    if time.time() > tank.tankFireLastTime:
                         if event.key == pygame.K_SPACE:
-                            bullet = Bullet(tanks[currentTank].rect.centerx, tanks[currentTank].rect.centery, tanks[currentTank].direction)
+                            bullet = Bullet(tank.rect.centerx, tank.rect.centery, tank.direction)
                             bullets.append(bullet)
                             pygame.mixer.Sound.play(bullet.shootSound)
-                            tanks[currentTank].tankFireLastTime = time.time() + FIRING_COOLDOWN
+                            tank.tankFireLastTime = time.time() + FIRING_COOLDOWN
 
+        keys = pygame.key.get_pressed()
+        for tank in tanks:
+            tank.move(keys)
 
-            keys = pygame.key.get_pressed()
-            for tank in tanks:
-                tank.move(keys)
+        for bullet in bullets[:]:
+            bullet.update()
+            if bullet.rect.bottom < 0 or bullet.rect.top > HEIGHT or bullet.rect.right < 0 or bullet.rect.left > WIDTH or bullet.check_collision():
+                bullets.remove(bullet)
 
-            # Drawing everything
-            draw(tanks, bullets, elapsed_time, stars)
-
-            for bullet in bullets[:]:
-                bullet.update()
-                if bullet.rect.bottom < 0 or bullet.rect.top > HEIGHT or bullet.rect.right < 0 or bullet.rect.left > WIDTH or bullet.check_collision():
-                    bullets.remove(bullet)
+        draw(tanks, bullets, elapsed_time, stars)
 
     pygame.quit()
 
