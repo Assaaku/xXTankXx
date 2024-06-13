@@ -7,7 +7,7 @@ pygame.font.init()
 WIDTH, HEIGHT = 1000, 800
 PLAYER_WIDTH = 45
 PLAYER_HEIGHT = 45
-PLAYER_VEL = 0.8
+PLAYER_VEL = 3.2
 STAR_WIDTH = 10
 STAR_HEIGHT = 20
 STAR_VEL = 3
@@ -162,9 +162,10 @@ class Tank:
 
 # Bullet class
 class Bullet:
-    def __init__(self, x, y, direction):
-        self.speed = 2
+    def __init__(self, x, y, direction, parent_tank):
+        self.speed = 4
         self.direction = direction
+        self.parent_tank = parent_tank
         if self.direction == 'up':
             self.image = bullet_image
         elif self.direction == 'down':
@@ -175,6 +176,9 @@ class Bullet:
             self.image = pygame.transform.rotate(bullet_image, -90)
         self.rect = self.image.get_rect(center=(x, y))
         self.shootSound = pygame.mixer.Sound('fire.ogg')
+        self.active = True  # Indicates if the bullet is still active
+
+
 
     def update(self):
         if self.direction == 'up':
@@ -189,13 +193,19 @@ class Bullet:
     def draw(self, screen):
         screen.blit(self.image, self.rect)
 
-    def check_collision(self):
+    def check_collision(self, tanks):
         for wall in walls:
             if self.rect.colliderect(wall.rect):
                 wall.hit()
                 if wall.is_broken():
                     walls.remove(wall)
                 return True
+
+        # Check collision with other tanks
+        for tank in tanks:
+            if tank != self.parent_tank and self.rect.colliderect(tank.rect):
+                return True
+
         return False
 
 # Draw function
@@ -218,6 +228,24 @@ def draw(tanks, bullets, elapsed_time, stars):
         wall.draw(WIN)
 
     pygame.display.update()
+
+def update_bullets(bullets):
+    count = len(bullets)
+    for i in range(count):
+        if not bullets[i].active:
+            continue
+        bullets[i].update()
+        
+        # Check for collisions with other bullets
+        for j in range(count):
+            if i != j and bullets[j].active and bullets[i].rect.colliderect(bullets[j].rect):
+                bullets[i].active = False
+                bullets[j].active = False
+                break  # Stop checking other bullets for this one since it's already collided
+
+    # Remove inactive bullets
+    bullets[:] = [b for b in bullets if b.active and b.rect.bottom >= 0 and b.rect.top <= HEIGHT and b.rect.right >= 0 and b.rect.left <= WIDTH]
+
 
 # Main 
 def main():
@@ -265,10 +293,11 @@ def main():
                 for tank in tanks:
                     if time.time() > tank.tankFireLastTime:
                         if event.key == pygame.K_SPACE:
-                            bullet = Bullet(tank.rect.centerx, tank.rect.centery, tank.direction)
+                            bullet = Bullet(tank.rect.centerx, tank.rect.centery, tank.direction, tank)
                             bullets.append(bullet)
                             pygame.mixer.Sound.play(bullet.shootSound)
                             tank.tankFireLastTime = time.time() + FIRING_COOLDOWN
+
 
         keys = pygame.key.get_pressed()
         for tank in tanks:
@@ -276,9 +305,13 @@ def main():
 
         for bullet in bullets[:]:
             bullet.update()
-            if bullet.rect.bottom < 0 or bullet.rect.top > HEIGHT or bullet.rect.right < 0 or bullet.rect.left > WIDTH or bullet.check_collision():
+            if (bullet.rect.bottom < 0 or bullet.rect.top > HEIGHT or 
+                bullet.rect.right < 0 or bullet.rect.left > WIDTH or 
+                bullet.check_collision(tanks)):
                 bullets.remove(bullet)
+                
 
+        update_bullets(bullets)
         draw(tanks, bullets, elapsed_time, stars)
 
     pygame.quit()
