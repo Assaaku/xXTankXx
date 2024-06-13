@@ -111,6 +111,7 @@ class Tank:
         self.moveSoundCooldown = 0.5  # Default cooldown duration
         self.timeDeltaCapture = time.time() 
         self.tankFireLastTime = time.time()
+        self.health = 1  # Add health attribute to the tank (you can adjust as needed)
         
     def move(self, keys):
         initial_position = self.rect.topleft
@@ -160,6 +161,12 @@ class Tank:
     def draw(self, screen):
         screen.blit(self.image, self.rect)
 
+    def take_damage(self):
+        self.health -= 1
+        if self.health <= 0:
+            return True  # Indicate that the tank is destroyed
+        return False  # Tank is still alive
+
 # Bullet class
 class Bullet:
     def __init__(self, x, y, direction, parent_tank):
@@ -177,8 +184,6 @@ class Bullet:
         self.rect = self.image.get_rect(center=(x, y))
         self.shootSound = pygame.mixer.Sound('fire.ogg')
         self.active = True  # Indicates if the bullet is still active
-
-
 
     def update(self):
         if self.direction == 'up':
@@ -204,6 +209,8 @@ class Bullet:
         # Check collision with other tanks
         for tank in tanks:
             if tank != self.parent_tank and self.rect.colliderect(tank.rect):
+                if tank.take_damage():
+                    tanks.remove(tank)  # Remove tank if destroyed
                 return True
 
         return False
