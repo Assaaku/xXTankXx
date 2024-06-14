@@ -396,7 +396,7 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
-                break
+                pygame.quit()
             elif event.type == pygame.KEYDOWN:
                 if(tanks[1] != None):
                     if time.time() > tanks[1].tankFireLastTime and tanks[1].isDestroyed == 0:
